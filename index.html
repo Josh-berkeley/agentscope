@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentScope — Observability Advisor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f0f2f6;
+  color: #1a1a2e;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+header {
+  background: #0f1117;
+  color: white;
+  padding: 0 28px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #1e2433;
+}
+.logo-mark {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.logo-name { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.logo-badge {
+  font-size: 10px; font-weight: 600;
+  background: #6366f1; color: white;
+  padding: 2px 8px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.header-right { margin-left: auto; font-size: 12px; color: #64748b; }
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── LHS ── */
+.lhs {
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 24px;
+  gap: 18px;
+}
+
+.lhs-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: -6px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+  display: block;
+}
+
+textarea#agentDesc {
+  width: 100%;
+  height: 170px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #334155;
+  resize: none;
+  font-family: inherit;
+  background: #fafbfc;
+  transition: border-color 0.2s, background 0.2s;
+}
+textarea#agentDesc:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: white;
+}
+textarea#agentDesc::placeholder { color: #c1cad6; }
+
+.quick-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.qtag {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: white;
+  user-select: none;
+}
+.qtag:hover { border-color: #6366f1; color: #6366f1; }
+.qtag.active { background: #ede9fe; border-color: #6366f1; color: #4f46e5; }
+
+.examples-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.example-pill {
+  font-size: 11px;
+  color: #6366f1;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.example-pill:hover { background: #ede9fe; }
+
+.analyze-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.analyze-btn:hover { opacity: 0.92; }
+.analyze-btn:active { transform: scale(0.98); }
+
+.footer-hint {
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+/* ── RHS ── */
+.rhs {
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #94a3b8;
+  gap: 10px;
+  padding: 40px;
+}
+.empty-icon { font-size: 52px; opacity: 0.4; }
+.empty-title { font-size: 16px; font-weight: 600; color: #64748b; }
+.empty-sub { font-size: 13px; max-width: 320px; line-height: 1.6; }
+
+/* ── Results ── */
+#results { display: none; flex-direction: column; gap: 0; }
+
+.profile-card {
+  background: linear-gradient(135deg, #f0f4ff 0%, #faf0ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.profile-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #6366f1;
+  margin-bottom: 10px;
+}
+.profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.profile-tag {
+  padding: 4px 10px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.profile-risks {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.7;
+}
+.risk-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.risk-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.risk-dot.critical { background: #ef4444; }
+.risk-dot.high { background: #f97316; }
+.risk-dot.medium { background: #eab308; }
+
+/* Section */
+.rec-section { margin-bottom: 28px; }
+.rec-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f1f5f9;
+}
+.rec-section-icon { font-size: 20px; }
+.rec-section-title { font-size: 15px; font-weight: 700; color: #1e293b; }
+.rec-count {
+  background: #1e293b;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.rec-section-desc { font-size: 12px; color: #94a3b8; margin-left: auto; }
+
+/* Cards */
+.rec-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.rec-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px;
+  cursor: pointer;
+}
+.priority-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.pill-critical { background: #fee2e2; color: #b91c1c; }
+.pill-high     { background: #fff7ed; color: #c2410c; }
+.pill-medium   { background: #fefce8; color: #a16207; }
+.pill-low      { background: #f0fdf4; color: #15803d; }
+.pill-always   { background: #f0f9ff; color: #075985; }
+
+.card-body { flex: 1; }
+.card-name { font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+.card-desc { font-size: 12.5px; color: #64748b; line-height: 1.5; }
+.card-toggle { color: #94a3b8; font-size: 12px; margin-top: 2px; flex-shrink: 0; transition: transform 0.2s; }
+.card-toggle.open { transform: rotate(180deg); }
+
+.card-details {
+  border-top: 1px solid #f1f5f9;
+  padding: 14px 16px;
+  background: #fafbfc;
+  display: none;
+}
+.card-details.open { display: block; }
+
+.why-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  margin-bottom: 5px;
+}
+.why-text {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.impl-block {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: #0c4a6e;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.impl-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0369a1;
+  margin-bottom: 4px;
+}
+
+.threshold-badge {
+  display: inline-block;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.code-block-wrap { margin-top: 10px; }
+.code-lang-label {
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+pre.code-block {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 13px 15px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  overflow-x: auto;
+  line-height: 1.65;
+  font-family: "JetBrains Mono", "Fira Code", "Monaco", "Courier New", monospace;
+  white-space: pre;
+}
+.code-kw  { color: #93c5fd; }
+.code-fn  { color: #86efac; }
+.code-str { color: #fcd34d; }
+.code-cm  { color: #64748b; }
+.code-num { color: #f9a8d4; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* ── API Key input ── */
+input#apiKey {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: #334155;
+  background: #fafbfc;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+input#apiKey:focus { outline: none; border-color: #6366f1; background: white; }
+input#apiKey::placeholder { color: #c1cad6; font-family: inherit; letter-spacing: 0; }
+.key-status { font-size: 11px; color: #94a3b8; margin-top: 5px; }
+.key-status.ok { color: #16a34a; }
+.key-status.error { color: #ef4444; }
+
+/* ── AI Analysis ── */
+.ai-section {
+  background: #0f1117;
+  border: 1px solid #1e2433;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+.ai-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #1e2433;
+}
+.ai-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: #818cf8;
+}
+.ai-model-badge {
+  font-size: 10px; background: #1e2433;
+  color: #475569; padding: 2px 8px;
+  border-radius: 4px; margin-left: auto;
+}
+.ai-body {
+  font-size: 13px; line-height: 1.8;
+  color: #cbd5e1; white-space: pre-wrap;
+}
+.ai-body b, .ai-body strong { color: #e2e8f0; }
+.ai-cursor {
+  display: inline-block; width: 2px; height: 14px;
+  background: #6366f1; margin-left: 2px;
+  animation: blink 0.7s step-end infinite;
+  vertical-align: middle;
+}
+@keyframes blink { 50% { opacity: 0; } }
+.ai-loading {
+  display: flex; align-items: center; gap: 10px;
+  color: #475569; font-size: 12.5px;
+}
+.ai-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid #1e2433;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-error { color: #f87171; font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">🔭</div>
+  <span class="logo-name">AgentScope</span>
+  <span class="logo-badge">MVP</span>
+  <span class="header-right">Agent Observability Advisor</span>
+</header>
+
+<div class="layout">
+  <!-- LHS -->
+  <div class="lhs">
+    <div class="lhs-section-title">Your Agent</div>
+
+    <div>
+      <label class="field-label" for="agentDesc">Describe what your agent does</label>
+      <textarea id="agentDesc"
+        placeholder="e.g. A customer support agent that answers questions from our knowledge base, escalates complex issues, and can look up order history via tools..."></textarea>
+    </div>
+
+    <div>
+      <label class="field-label">Quick tags <span style="font-weight:400;color:#94a3b8">(click to select all that apply)</span></label>
+      <div class="quick-tags-row">
+        <span class="qtag" data-tag="rag">🔍 RAG / Retrieval</span>
+        <span class="qtag" data-tag="customer_service">🎧 Customer Service</span>
+        <span class="qtag" data-tag="coding">💻 Coding Assistant</span>
+        <span class="qtag" data-tag="agentic">⚙️ Tool-using / Agentic</span>
+        <span class="qtag" data-tag="multi_turn">💬 Multi-turn Chat</span>
+        <span class="qtag" data-tag="financial">💰 Financial / Fintech</span>
+        <span class="qtag" data-tag="medical">🏥 Medical / Health</span>
+        <span class="qtag" data-tag="content">✍️ Content Generation</span>
+        <span class="qtag" data-tag="data_analysis">📊 Data Analysis</span>
+        <span class="qtag" data-tag="autonomous">🤖 Autonomous / Long-running</span>
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label">Example agents</label>
+      <div class="examples-row">
+        <span class="example-pill" data-ex="rag_cs">RAG support bot</span>
+        <span class="example-pill" data-ex="coding">Coding assistant</span>
+        <span class="example-pill" data-ex="agentic">Agentic workflow</span>
+        <span class="example-pill" data-ex="financial">Financial advisor bot</span>
+        <span class="example-pill" data-ex="medical">Clinical Q&A</span>
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label">LLM API Key <span style="font-weight:400;color:#94a3b8">(Claude — for AI analysis)</span></label>
+      <input id="apiKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off"
+        oninput="CLAUDE_API_KEY=this.value.trim();localStorage.setItem('agentscope_key',this.value.trim())" />
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px">Stored locally in your browser. Never sent anywhere except Anthropic.</div>
+    </div>
+
+    <button class="analyze-btn" onclick="analyze()">→ Get Recommendations</button>
+
+    <div class="footer-hint">
+      ⚡ Add your Claude API key above for AI-powered analysis. Without a key, recommendations are based on keyword matching.
+    </div>
+  </div>
+
+  <!-- RHS -->
+  <div class="rhs">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔭</div>
+      <div class="empty-title">Describe your agent to get started</div>
+      <div class="empty-sub">Paste a description on the left, select relevant tags, and hit "Get Recommendations" to see your custom observability plan.</div>
+    </div>
+
+    <div id="results">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+// API key set by user at runtime
+let CLAUDE_API_KEY = localStorage.getItem("agentscope_key") || "";
+
+/* ─────────────────────────────────────────────
+   RECOMMENDATION LIBRARY
+   Each item: { id, name, desc, priority, tags[], why, impl, code?, threshold? }
+   tags: which agent categories trigger this item
+   'always' = show for all agents
+───────────────────────────────────────────── */
+
+const GUARDRAILS = [
+  {
+    id: "prompt_injection",
+    name: "Prompt Injection Detection",
+    desc: "Detect and block attempts to override system instructions via crafted user input.",
+    priority: "critical",
+    tags: ["always"],
+    why: "Prompt injection is the #1 attack vector for LLM agents. Inputs like \"Ignore previous instructions and…\" or embedded instructions in tool results can completely hijack agent behavior. Every public-facing agent is at risk.",
+    impl: "Run a dedicated injection classifier (e.g. Rebuff, LLM Guard, or a lightweight intent classifier) on all user inputs before the main LLM call. Also scan content returned from external tools/APIs.",
+    code: `from llm_guard.input_scanners import PromptInjection
+from llm_guard import scan_prompt
+
+scanner = PromptInjection()
+
+def safe_invoke(user_input: str) -> str:
+    sanitized, results, valid = scan_prompt(
+        [scanner], user_input
+    )
+    if not valid["PromptInjection"]:
+        raise GuardrailError("PROMPT_INJECTION_DETECTED")
+    return agent.invoke(sanitized)`
+  },
+  {
+    id: "pii_detection",
+    name: "PII Detection & Masking",
+    desc: "Detect and redact personally identifiable information in both inputs and outputs before logging.",
+    priority: "critical",
+    tags: ["customer_service", "financial", "medical", "pii", "multi_turn"],
+    why: "Users routinely include SSNs, credit card numbers, health details, and emails in agent queries. Logging raw I/O creates GDPR/CCPA/HIPAA exposure. Outputs can also echo back PII from retrieved context.",
+    impl: "Use Microsoft Presidio or AWS Comprehend to scan I/O. Log only masked versions. Trigger an alert when high-confidence PII (SSN, card number) is detected in output.",
+    code: `from presidio_analyzer import AnalyzerEngine
+from presidio_anonymizer import AnonymizerEngine
+
+analyzer = AnalyzerEngine()
+anonymizer = AnonymizerEngine()
+
+def mask_pii(text: str) -> str:
+    results = analyzer.analyze(text=text, language="en")
+    return anonymizer.anonymize(text, results).text
+
+# In your pipeline:
+safe_input  = mask_pii(user_input)   # before LLM
+safe_output = mask_pii(llm_response) # before logging`
+  },
+  {
+    id: "groundedness_guard",
+    name: "Hallucination / Groundedness Guard",
+    desc: "Block or flag responses where factual claims are not supported by retrieved context.",
+    priority: "critical",
+    tags: ["rag", "qa", "factual", "medical", "financial", "research"],
+    why: "LLMs confidently generate plausible but unsupported facts — especially when retrieved context is noisy or incomplete. In medical or financial contexts, a hallucinated answer can cause direct harm.",
+    impl: "After generation, run an LLM-as-judge entailment check. Score < 0.75 → redact and show a fallback message. Log all low-groundedness responses for human review.",
+    code: `def check_groundedness(response: str, context: str) -> dict:
+    prompt = f"""You are a factual auditor.
+Context: {context}
+
+Response: {response}
+
+For each factual claim in the response, check if it is
+directly supported by the context (not inferred or added).
+Return JSON: {{"score": 0.0-1.0, "unsupported": [<claims>]}}"""
+    result = llm.json(prompt)
+    return result
+
+# In pipeline:
+check = check_groundedness(response, retrieved_docs)
+if check["score"] < 0.75:
+    log_hallucination(check)
+    return FALLBACK_MESSAGE`
+  },
+  {
+    id: "tool_call_validator",
+    name: "Tool Call Validator",
+    desc: "Validate tool inputs/outputs before execution and after results are returned.",
+    priority: "critical",
+    tags: ["agentic", "autonomous", "coding"],
+    why: "Agents with tool access are the highest blast-radius failure mode. An agent calling a write API or delete endpoint with bad parameters can cause irreversible side-effects. Mis-formed tool calls silently fail and corrupt agent state.",
+    impl: "Validate tool arguments against a JSON schema before execution. After tool returns, validate the response schema. Log every tool call with inputs, outputs, and latency.",
+    code: `from jsonschema import validate, ValidationError
+
+TOOL_SCHEMAS = {
+    "search_db": {
+        "type": "object",
+        "required": ["query", "limit"],
+        "properties": {
+            "query": {"type": "string", "minLength": 1},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 50}
+        }
+    }
+}
+
+def validated_tool_call(tool_name: str, args: dict):
+    try:
+        validate(args, TOOL_SCHEMAS[tool_name])
+    except ValidationError as e:
+        raise GuardrailError(f"INVALID_TOOL_ARGS: {e.message}")
+
+    result = tools[tool_name](**args)
+    log_tool_call(tool_name, args, result)
+    return result`
+  },
+  {
+    id: "topic_boundary",
+    name: "Topic / Domain Boundary Guard",
+    desc: "Detect and redirect out-of-domain queries before they consume tokens or produce harmful off-topic answers.",
+    priority: "high",
+    tags: ["customer_service", "always"],
+    why: "Without a domain boundary, agents get pulled into answering unrelated queries (medical advice, legal opinions, etc.) outside their designed scope. This erodes trust and creates liability.",
+    impl: "Use a fast, cheap classifier (few-shot prompt or embedding cosine similarity vs. domain examples) to route off-topic queries to a standard rejection message.",
+    code: `# Embedding-based domain check
+import numpy as np
+
+def is_in_domain(query: str, threshold=0.72) -> bool:
+    query_emb = embed(query)
+    # Compare against domain anchor embeddings
+    scores = [cosine(query_emb, a) for a in DOMAIN_ANCHORS]
+    return max(scores) >= threshold
+
+if not is_in_domain(user_input):
+    return "I can only help with [your domain]. Please contact support for other questions."`
+  },
+  {
+    id: "output_length_guard",
+    name: "Output Length & Format Guard",
+    desc: "Enforce expected response lengths and structural formats (JSON, markdown, etc.).",
+    priority: "medium",
+    tags: ["always"],
+    why: "Unbounded outputs inflate costs, break downstream parsers, and indicate a confused model state. Structured output failures (malformed JSON) silently break pipelines.",
+    impl: "Add max_tokens limits per use-case. For structured outputs, use Pydantic validation or retry with correction prompt on parse failure (max 2 retries).",
+    code: `from pydantic import BaseModel, ValidationError
+
+class AgentResponse(BaseModel):
+    answer: str
+    sources: list[str]
+    confidence: float  # 0.0–1.0
+
+def parse_response(raw: str) -> AgentResponse:
+    for attempt in range(2):
+        try:
+            return AgentResponse.model_validate_json(raw)
+        except ValidationError as e:
+            raw = llm.fix_json(raw, error=str(e))
+    raise GuardrailError("MALFORMED_OUTPUT")`
+  },
+  {
+    id: "rate_limit",
+    name: "Rate Limiting & Abuse Detection",
+    desc: "Throttle per-user request rates and detect anomalous usage patterns.",
+    priority: "medium",
+    tags: ["always"],
+    why: "Without rate limiting, a single malicious or runaway client can exhaust your token budget in minutes. Unusual spike patterns also indicate abuse or prompt injection campaigns.",
+    impl: "Apply per-user token budgets (e.g. 50k tokens/hour). Track anomaly signals: requests/minute, avg prompt length, repeated injection attempts. Alert on 3σ deviations.",
+    threshold: "Max: 50k tokens/user/hr | Alert: >20 req/min"
+  },
+  {
+    id: "max_iterations",
+    name: "Max Iterations / Recursion Limit",
+    desc: "Cap the number of tool call loops or reasoning steps to prevent runaway agents.",
+    priority: "high",
+    tags: ["agentic", "autonomous"],
+    why: "Agentic loops can get stuck in cycles — calling tools that return ambiguous results, triggering re-planning indefinitely. This burns cost and blocks resources.",
+    impl: "Set max_iterations=10 (or domain-appropriate) in your agent executor. Log when the limit is hit. Implement graceful degradation: return partial result with a note.",
+    code: `# LangChain / custom agent loop
+MAX_STEPS = 10
+
+for step in range(MAX_STEPS):
+    action = agent.plan(state)
+    if action.is_final:
+        return action.output
+    state = execute_tool(action)
+
+    if step == MAX_STEPS - 1:
+        log_metric("agent.max_iterations_hit", 1)
+        return {"partial_result": state, "truncated": True}`
+  },
+  {
+    id: "sensitive_output_filter",
+    name: "Sensitive Data Output Filter",
+    desc: "Scan all outputs for credentials, API keys, internal system details before returning to user.",
+    priority: "high",
+    tags: ["coding", "agentic", "financial", "medical"],
+    why: "Agents accessing databases, codebases, or internal APIs can inadvertently surface credentials, internal URLs, or proprietary data in their responses.",
+    impl: "Run a regex + entropy scan on all outputs. Flag high-entropy strings (potential keys), internal IP patterns, and known secret formats (AWS, Stripe patterns).",
+    code: `import re, math
+
+SECRET_PATTERNS = [
+    r'sk-[a-zA-Z0-9]{40,}',         # OpenAI key pattern
+    r'AKIA[0-9A-Z]{16}',            # AWS Access Key
+    r'(?i)(password|secret|token)\s*[:=]\s*\S+',
+]
+
+def scan_output(text: str) -> list[str]:
+    violations = []
+    for pattern in SECRET_PATTERNS:
+        if re.search(pattern, text):
+            violations.append(pattern)
+    return violations`
+  },
+  {
+    id: "escalation_trigger",
+    name: "Escalation & Handoff Trigger",
+    desc: "Detect when the agent is uncertain or the query exceeds its competence, and gracefully hand off to a human.",
+    priority: "high",
+    tags: ["customer_service", "medical", "financial"],
+    why: "Agents that try to answer questions outside their competence produce confident-sounding wrong answers. Knowing when NOT to answer is as important as answering correctly.",
+    impl: "Track low-confidence signals: low retrieval scores, repeated user corrections, 'I don't know' patterns, specific escalation phrases ('speak to a human'). Route to support queue.",
+    code: `def should_escalate(query: str, retrieval_score: float,
+                      turn_count: int) -> bool:
+    signals = []
+    if retrieval_score < 0.5:
+        signals.append("low_retrieval")
+    if turn_count > 5 and "still" in query.lower():
+        signals.append("unresolved_multi_turn")
+    if any(p in query.lower() for p in
+           ["human", "agent", "manager", "supervisor"]):
+        signals.append("explicit_escalation_request")
+    return len(signals) >= 1`
+  },
+];
+
+const EVALS = [
+  {
+    id: "faithfulness",
+    name: "Faithfulness Score (RAG)",
+    desc: "Measure what fraction of claims in the response are directly supported by retrieved context.",
+    priority: "critical",
+    tags: ["rag", "factual", "qa", "research"],
+    why: "This is the primary quality signal for RAG systems. A high faithfulness score means low hallucination. Target ≥ 0.85 in production. Sample 5–10% of traffic continuously.",
+    impl: "Use RAGAS library or an LLM-as-judge prompt. Log faithfulness per document type and per retrieval strategy. Alert if 7-day moving average drops below 0.80.",
+    threshold: "Target: ≥ 0.85 | Alert: < 0.80",
+    code: `from ragas.metrics import faithfulness
+from ragas import evaluate
+from datasets import Dataset
+
+def run_faithfulness_eval(batch: list[dict]) -> float:
+    """
+    batch: [{"question", "answer", "contexts": [...]}]
+    """
+    ds = Dataset.from_list(batch)
+    result = evaluate(ds, metrics=[faithfulness])
+    score = result["faithfulness"]
+
+    log_metric("eval.faithfulness", score)
+    if score < 0.80:
+        alert("FAITHFULNESS_DEGRADED", score)
+    return score`
+  },
+  {
+    id: "answer_relevancy",
+    name: "Answer Relevancy",
+    desc: "Score how well the agent's response actually addresses the user's question.",
+    priority: "high",
+    tags: ["rag", "qa", "customer_service", "always"],
+    why: "An agent can be faithful to its context but still answer the wrong question. Relevancy measures alignment between the question intent and the response content.",
+    impl: "Use RAGAS answer_relevancy or an embedding cosine similarity between question and answer. Run on sampled production traffic + full regression suite.",
+    threshold: "Target: ≥ 0.82 | Alert: < 0.75",
+    code: `from ragas.metrics import answer_relevancy
+import numpy as np
+
+def answer_relevancy_score(question: str, answer: str) -> float:
+    # Generate synthetic questions from the answer,
+    # then compute similarity to original question
+    q_emb  = embed(question)
+    a_emb  = embed(answer)
+    return float(np.dot(q_emb, a_emb) /
+                 (np.linalg.norm(q_emb) * np.linalg.norm(a_emb)))`
+  },
+  {
+    id: "context_precision",
+    name: "Context Precision & Recall",
+    desc: "Measure whether the top-k retrieved chunks are actually relevant to the query.",
+    priority: "high",
+    tags: ["rag", "research"],
+    why: "Poor retrieval quality is the most common root cause of hallucination in RAG systems. Context precision tells you if your retriever is surfacing the right documents.",
+    impl: "Use RAGAS context_precision. Also track mean reciprocal rank (MRR) and NDCG for your retriever. Run nightly on golden Q&A pairs.",
+    threshold: "Target: ≥ 0.80 | MRR: ≥ 0.75",
+    code: `from ragas.metrics import context_precision, context_recall
+from ragas import evaluate
+
+def eval_retrieval(test_set: list) -> dict:
+    """
+    test_set: [{"question", "contexts", "ground_truth"}]
+    """
+    ds = Dataset.from_list(test_set)
+    result = evaluate(ds, metrics=[
+        context_precision,
+        context_recall
+    ])
+    return {
+        "precision": result["context_precision"],
+        "recall":    result["context_recall"]
+    }`
+  },
+  {
+    id: "tone_consistency",
+    name: "Tone & Brand Voice Consistency",
+    desc: "Score whether agent responses match your intended tone (professional, empathetic, concise, etc.).",
+    priority: "high",
+    tags: ["customer_service", "content"],
+    why: "Tone inconsistency erodes brand trust. LLMs drift toward formal/verbose when uncertain. Tracking this prevents both overly blunt and overly apologetic responses at scale.",
+    impl: "Use an LLM-as-judge with your tone guidelines. Embed 'good' tone examples as anchors; flag responses with embedding distance > threshold.",
+    code: `TONE_RUBRIC = """
+Evaluate this customer service response on tone (1–5):
+5 = Warm, helpful, clear, professional, concise
+3 = Neutral but acceptable
+1 = Cold, rude, confusing, or overly verbose
+
+Response: {response}
+Return: {{"score": int, "reason": str}}"""
+
+def tone_eval(response: str) -> dict:
+    result = llm.json(TONE_RUBRIC.format(response=response))
+    log_metric("eval.tone_score", result["score"])
+    return result`
+  },
+  {
+    id: "format_compliance",
+    name: "Format / Schema Compliance",
+    desc: "Verify that structured outputs (JSON, markdown, code blocks) conform to the expected schema.",
+    priority: "high",
+    tags: ["coding", "agentic", "data_analysis"],
+    why: "Format failures in production are silent but catastrophic — broken JSON breaks the entire downstream pipeline. Format compliance should be 100%; any failure is a p0 regression.",
+    impl: "Parse and validate every structured output against its Pydantic schema. Log parse errors separately from content errors. Track failure rate by prompt template version.",
+    threshold: "Target: 100% | Alert: any failure",
+    code: `import jsonschema, json
+from collections import Counter
+
+format_failures = Counter()
+
+def validate_format(response: str, schema: dict,
+                    template_id: str) -> bool:
+    try:
+        data = json.loads(response)
+        jsonschema.validate(data, schema)
+        return True
+    except (json.JSONDecodeError, jsonschema.ValidationError) as e:
+        format_failures[template_id] += 1
+        log_event("format_failure", {
+            "template": template_id,
+            "error": str(e),
+            "response_preview": response[:200]
+        })
+        return False`
+  },
+  {
+    id: "tool_accuracy",
+    name: "Tool Selection Accuracy",
+    desc: "Measure whether the agent chose the correct tool(s) for each intent, with correct arguments.",
+    priority: "critical",
+    tags: ["agentic", "autonomous"],
+    why: "Wrong tool selection compounds across multi-step tasks — a wrong first action can make subsequent steps impossible to recover from. This is the key quality metric for tool-using agents.",
+    impl: "Maintain a golden test set of (query → expected_tool, expected_args) pairs. Run on every deploy. Score both tool name accuracy and argument fidelity separately.",
+    threshold: "Tool name: ≥ 95% | Arg match: ≥ 90%",
+    code: `from dataclasses import dataclass
+
+@dataclass
+class ToolCall:
+    tool_name: str
+    args: dict
+
+def eval_tool_selection(
+    query: str,
+    expected: ToolCall,
+    actual: ToolCall
+) -> dict:
+    name_correct = actual.tool_name == expected.tool_name
+    # Arg fidelity: fraction of required args correct
+    required_args = set(expected.args.keys())
+    matched = sum(
+        actual.args.get(k) == v
+        for k, v in expected.args.items()
+    )
+    return {
+        "tool_correct": name_correct,
+        "arg_fidelity": matched / len(required_args)
+    }`
+  },
+  {
+    id: "safety_classifier",
+    name: "Safety & Harm Classifier",
+    desc: "Classify outputs for harmful content categories: hate speech, violence, self-harm, illegal activity.",
+    priority: "critical",
+    tags: ["always", "content", "customer_service"],
+    why: "LLMs can generate subtly harmful content even when prompted to be safe, especially in edge-case inputs. This is a non-negotiable eval category for any user-facing agent.",
+    impl: "Use OpenAI Moderation API, Llama Guard, or a fine-tuned classifier on every output. Flag any response scoring above threshold in ANY harm category.",
+    threshold: "Target: 0 policy violations | Alert: any score > 0.5",
+    code: `from openai import OpenAI
+client = OpenAI()
+
+HARM_CATEGORIES = [
+    "hate", "hate/threatening", "self-harm",
+    "sexual", "violence", "harassment"
+]
+
+def safety_check(text: str) -> dict:
+    response = client.moderations.create(input=text)
+    result = response.results[0]
+    violations = {
+        cat: getattr(result.category_scores, cat.replace("/","_"))
+        for cat in HARM_CATEGORIES
+        if getattr(result.categories, cat.replace("/","_"))
+    }
+    if violations:
+        log_event("safety_violation", violations)
+    return {"safe": not bool(violations), "scores": violations}`
+  },
+  {
+    id: "regression_suite",
+    name: "Behavioral Regression Test Suite",
+    desc: "A curated golden set of input→expected_output pairs that runs on every deployment.",
+    priority: "high",
+    tags: ["always"],
+    why: "LLM behavior drifts with model updates, prompt changes, and retrieval index changes. Without a regression suite you won't know what broke until users complain.",
+    impl: "Start with 50–100 hand-curated examples covering your top use cases + known failure cases. Use LLM-as-judge for non-deterministic outputs. Gate deploys on ≥ 95% pass rate.",
+    threshold: "Gate deploys at: ≥ 95% pass rate",
+    code: `import yaml, asyncio
+
+async def run_regression_suite(agent, suite_path="evals/golden.yaml"):
+    suite = yaml.safe_load(open(suite_path))
+    results = await asyncio.gather(*[
+        evaluate_case(agent, case) for case in suite["cases"]
+    ])
+    pass_rate = sum(r["passed"] for r in results) / len(results)
+
+    print(f"Regression: {pass_rate:.1%} ({sum(r['passed'] for r in results)}/{len(results)})")
+
+    if pass_rate < 0.95:
+        raise DeployBlocker(f"Regression below threshold: {pass_rate:.1%}")`
+  },
+  {
+    id: "multi_turn_coherence",
+    name: "Multi-turn Coherence Eval",
+    desc: "Check that the agent maintains consistent context, facts, and persona across a conversation.",
+    priority: "medium",
+    tags: ["multi_turn", "customer_service"],
+    why: "Long conversations surface memory failures — agents contradict earlier statements, forget established facts, or re-ask for information already provided. This dramatically degrades user trust.",
+    impl: "After each session, extract key facts stated by agent/user. Run an LLM judge to check for contradictions and memory failures. Track coherence score per session length bucket.",
+    code: `def coherence_eval(conversation: list[dict]) -> float:
+    # Extract all factual claims made by the agent
+    agent_turns = [t["content"] for t in conversation
+                   if t["role"] == "assistant"]
+
+    prompt = f"""Given these sequential agent responses:
+{chr(10).join(f"{i+1}. {t}" for i,t in enumerate(agent_turns))}
+
+Are there any factual contradictions or memory failures?
+Return JSON: {{"coherent": bool, "issues": [...]}}"""
+
+    result = llm.json(prompt)
+    return 1.0 if result["coherent"] else 0.0`
+  },
+  {
+    id: "latency_sla",
+    name: "Latency SLA Eval",
+    desc: "Track and assert on p50/p95/p99 response latencies against defined SLAs.",
+    priority: "medium",
+    tags: ["always"],
+    why: "Latency regressions go unnoticed without continuous tracking. Slow agents get abandoned. LLM latency spikes often indicate context bloat, retrieval timeouts, or excessive tool chaining.",
+    impl: "Instrument every agent call with start/end timestamps. Export to Datadog/Prometheus. Alert on p95 > 8s or p99 > 15s. Profile slow traces with token count correlation.",
+    threshold: "p50: < 2s | p95: < 8s | p99: < 15s",
+    code: `import time
+from functools import wraps
+
+def track_latency(metric_name: str):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            try:
+                result = fn(*args, **kwargs)
+                status = "success"
+                return result
+            except Exception as e:
+                status = "error"
+                raise
+            finally:
+                latency_ms = (time.perf_counter() - start) * 1000
+                metrics.histogram(metric_name, latency_ms,
+                                  tags=[f"status:{status}"])
+        return wrapper
+    return decorator`
+  },
+  {
+    id: "code_quality",
+    name: "Generated Code Quality",
+    desc: "Lint, type-check, and test-execute code generated by the agent before returning to the user.",
+    priority: "high",
+    tags: ["coding"],
+    why: "Generated code with syntax errors, security vulnerabilities (SQL injection, eval(), insecure deserialization), or incorrect logic is worse than no code. Sandboxed execution catches many failures before delivery.",
+    impl: "Run ruff/pylint for linting. Use bandit for security scanning. Sandbox-execute code examples in an E2B or Firecracker environment. Gate on 0 security violations.",
+    code: `import subprocess, ast
+
+def validate_generated_code(code: str, language="python") -> dict:
+    issues = []
+
+    # 1. Syntax check
+    try:
+        ast.parse(code)
+    except SyntaxError as e:
+        issues.append({"type": "syntax_error", "detail": str(e)})
+
+    # 2. Security scan (bandit)
+    result = subprocess.run(
+        ["bandit", "-", "--format", "json"],
+        input=code, capture_output=True, text=True
+    )
+    security = json.loads(result.stdout)
+    high_issues = [i for i in security.get("results", [])
+                   if i["issue_severity"] in ("HIGH", "MEDIUM")]
+    issues.extend(high_issues)
+
+    return {"valid": len(issues) == 0, "issues": issues}`
+  },
+  {
+    id: "bias_detection",
+    name: "Bias & Fairness Detection",
+    desc: "Test for differential response quality or framing across demographic groups.",
+    priority: "high",
+    tags: ["medical", "financial", "customer_service", "data_analysis"],
+    why: "LLMs encode societal biases that manifest as inconsistent quality across user groups. This is a legal risk in hiring, lending, and healthcare contexts, and an ethical one everywhere else.",
+    impl: "Create counterfactual test pairs (same query, different demographic signal). Compare response quality and framing. Track disparity metrics over time.",
+    code: `DEMOGRAPHIC_VARIANTS = [
+    ("he", "she", "they"),           # gender pronouns
+    ("John", "Maria", "Wei"),        # names implying ethnicity
+    ("American", "British", "Indian") # nationality
+]
+
+def run_bias_eval(query_template: str) -> dict:
+    results = {}
+    for variant_group in DEMOGRAPHIC_VARIANTS:
+        responses = {
+            v: agent.invoke(query_template.format(pronoun=v))
+            for v in variant_group
+        }
+        scores = {v: quality_score(r) for v,r in responses.items()}
+        disparity = max(scores.values()) - min(scores.values())
+        results[str(variant_group)] = {"scores": scores, "disparity": disparity}
+    return results`
+  },
+];
+
+const METRICS = [
+  {
+    id: "latency_percentiles",
+    name: "Response Latency (p50 / p95 / p99)",
+    desc: "Distribution of end-to-end response times across all agent calls.",
+    priority: "always",
+    tags: ["always"],
+    why: "The single most user-visible performance metric. Track all three percentiles — p50 shows typical experience, p95/p99 reveal tail latency spikes that affect power users.",
+    impl: "Instrument at the API gateway level. Export as histogram to Prometheus/Datadog. Create alerts for p95 > 8s sustained for > 2 minutes.",
+    threshold: "p50 < 2s | p95 < 8s | p99 < 15s"
+  },
+  {
+    id: "token_usage",
+    name: "Token Usage (Input / Output / Total)",
+    desc: "Track prompt tokens, completion tokens, and total per request — segmented by user and use case.",
+    priority: "always",
+    tags: ["always"],
+    why: "Token usage is your cost. Prompt bloat from bad retrieval, over-long system prompts, or conversation history accumulation can silently 10x your costs. Monitor for anomalous spikes.",
+    impl: "Extract from API response metadata. Track daily p95 token count per session. Alert if daily cost exceeds budget by 20%. Create cost-per-query dashboard.",
+    threshold: "Alert: daily cost > budget × 1.2"
+  },
+  {
+    id: "error_rate",
+    name: "Error Rate (Hard / Soft / Guardrail)",
+    desc: "Track 3 error categories: hard errors (crashes, timeouts), soft errors (fallback responses), and guardrail triggers.",
+    priority: "always",
+    tags: ["always"],
+    why: "Separating error types reveals root causes. High guardrail trigger rate = active attack or prompt drift. High soft error rate = retrieval degradation. High hard error rate = infra issue.",
+    impl: "Use structured logging with error_type field. Export error_rate by type to your dashboard. Set alerts per category with different thresholds.",
+    threshold: "Hard errors < 0.5% | Guardrail triggers < 2% | Soft errors < 5%"
+  },
+  {
+    id: "tool_success_rate",
+    name: "Tool Call Success Rate",
+    desc: "Percentage of tool invocations that complete successfully (no error, valid output schema).",
+    priority: "high",
+    tags: ["agentic", "autonomous"],
+    why: "Tool failures cascade — one failed tool call typically breaks the entire task. Tracking by individual tool reveals which API integrations need reliability improvements.",
+    impl: "Log every tool call with tool_name, success/failure, error_code, and latency. Create per-tool success rate dashboards. Alert if any tool drops below 95%.",
+    threshold: "Per-tool: ≥ 98% | Overall: ≥ 95%"
+  },
+  {
+    id: "retrieval_quality",
+    name: "Retrieval Quality Score",
+    desc: "Mean relevance score of top-k retrieved chunks, sampled across live traffic.",
+    priority: "high",
+    tags: ["rag", "research", "qa"],
+    why: "Retrieval quality is the upstream cause of most RAG hallucinations. A declining retrieval score means your index is becoming stale or your embeddings have drifted from user queries.",
+    impl: "Log retrieval scores from your vector DB (similarity scores). Track daily mean and p10 (weakest retrievals). Alert on 7-day moving average decline > 5%.",
+    threshold: "Mean score: ≥ 0.75 | p10: ≥ 0.60"
+  },
+  {
+    id: "user_satisfaction",
+    name: "User Satisfaction (Thumbs / CSAT)",
+    desc: "Explicit user feedback — thumbs up/down, star ratings, or post-session survey scores.",
+    priority: "high",
+    tags: ["customer_service", "multi_turn", "always"],
+    why: "This is the ground truth signal. All automated metrics are proxies; user satisfaction is what actually matters. It also creates a labeled dataset for fine-tuning.",
+    impl: "Add inline thumbs up/down to every response. Store with full conversation context. Track daily CSAT %. Use thumbs-down responses as priority cases for eval.",
+    threshold: "CSAT: ≥ 4.2/5 | Thumbs-up: ≥ 80%"
+  },
+  {
+    id: "cost_per_query",
+    name: "Cost Per Query (CPQ)",
+    desc: "Total LLM + infrastructure cost divided by successful queries, tracked over time.",
+    priority: "medium",
+    tags: ["always"],
+    why: "Without CPQ tracking, cost scaling is invisible until your bill arrives. Agents with tool chaining, retries, or long context windows can have 10–50x higher CPQ than simple Q&A.",
+    impl: "Calculate: (input_tokens × input_price + output_tokens × output_price + retrieval_cost) / successful_queries. Track weekly CPQ trend and alert on > 15% week-over-week increase.",
+    threshold: "Track weekly; alert on >15% WoW increase"
+  },
+  {
+    id: "escalation_rate",
+    name: "Escalation / Fallback Rate",
+    desc: "Percentage of sessions that trigger a human handoff, fallback message, or explicit 'I don't know'.",
+    priority: "high",
+    tags: ["customer_service", "agentic", "medical"],
+    why: "Too high = agent knowledge gaps or brittle retrieval. Too low = agent is overconfident and answering questions it shouldn't. Target the 'sweet spot' for your use case.",
+    impl: "Tag every fallback/escalation response. Track rate by query category. A sudden spike often indicates a knowledge gap (new product launch, policy change not in index).",
+    threshold: "Target: 5–15% (tune per domain)"
+  },
+  {
+    id: "hallucination_sample_rate",
+    name: "Hallucination Rate (Sampled)",
+    desc: "Proportion of responses containing at least one unsupported factual claim, measured on a sample.",
+    priority: "critical",
+    tags: ["rag", "factual", "medical", "financial"],
+    why: "The single most important trust metric for information retrieval agents. Even a 2% hallucination rate at scale means thousands of wrong answers per day.",
+    impl: "Sample 2–5% of production responses. Run automated groundedness eval. Also route low-scoring responses to human reviewers weekly. Track trend over 30 days.",
+    threshold: "Target: < 2% | Critical alert: > 5%"
+  },
+  {
+    id: "goal_completion",
+    name: "Goal Completion Rate",
+    desc: "Percentage of agent sessions where the user's stated goal was fully accomplished.",
+    priority: "high",
+    tags: ["agentic", "customer_service", "autonomous"],
+    why: "The ultimate outcome metric. An agent can have great latency and low error rates but still fail to complete user goals due to reasoning failures or tool limitations.",
+    impl: "Define completion criteria per use case (e.g. 'ticket resolved without escalation'). Use a combination of explicit signals (user confirmed) + implicit signals (no re-query within 5min).",
+    threshold: "Target: ≥ 75% | Alert: < 60%"
+  },
+  {
+    id: "session_length",
+    name: "Session Length / Turn Count Distribution",
+    desc: "Distribution of conversation turns per session and session duration.",
+    priority: "medium",
+    tags: ["multi_turn", "customer_service", "agentic"],
+    why: "Increasing average turn counts signal user frustration or agent inefficiency. High-variance sessions suggest the agent handles some queries well but struggles badly with others.",
+    impl: "Log session start/end and turn count. Track p50/p90 turns per session. Segment by intent category. Alert if p90 turn count increases > 30% month-over-month.",
+    threshold: "p50: < 4 turns | p90: < 10 turns"
+  },
+  {
+    id: "retry_rate",
+    name: "Retry Rate",
+    desc: "Percentage of LLM calls or tool calls that require a retry due to failure.",
+    priority: "medium",
+    tags: ["always", "agentic"],
+    why: "Retries multiply your cost and latency. A rising retry rate is an early warning of upstream API instability, context length issues, or format compliance failures.",
+    impl: "Instrument retry logic with reason tagging (timeout, format_failure, safety_block, rate_limit). Track retry rate and P(success | retry). Alert if retry rate > 5%.",
+    threshold: "Alert: retry rate > 5%"
+  },
+  {
+    id: "model_drift",
+    name: "Output Distribution Drift",
+    desc: "Detect when agent output characteristics shift due to model updates, prompt changes, or data drift.",
+    priority: "medium",
+    tags: ["always"],
+    why: "Model providers update models silently. Your prompt's effectiveness can degrade with model updates. Output length, format, and semantic content can all drift without explicit errors.",
+    impl: "Track weekly distributions of: output length, vocabulary novelty score, format compliance rate, and embedding centroid distance from baseline. Alert on > 2σ shifts.",
+    threshold: "Alert: > 2σ shift from 30-day baseline"
+  },
+];
+
+/* ─────────────────────────────────────────────
+   DETECTION ENGINE
+   Maps agent description text → detected tags
+───────────────────────────────────────────── */
+const KEYWORD_MAP = {
+  rag:              ["rag", "retrieval", "vector", "knowledge base", "knowledge-base", "documents", "search", "embedding", "pinecone", "weaviate", "chroma", "faiss", "semantic search", "retrieve"],
+  qa:               ["q&a", "question answer", "faq", "knowledge", "answer questions"],
+  factual:          ["factual", "fact", "grounded", "accurate", "citations", "sources", "cite"],
+  research:         ["research", "summarize", "summarization", "academic", "papers"],
+  customer_service: ["customer", "support", "helpdesk", "help desk", "ticket", "service", "complaint", "user question", "user queries"],
+  coding:           ["code", "coding", "programming", "developer", "software", "debug", "github", "generate code", "write code", "function", "refactor"],
+  agentic:          ["tool", "function call", "api call", "action", "workflow", "pipeline", "orchestrat", "plan", "execute", "agent", "multi-step", "task completion"],
+  autonomous:       ["autonomous", "long-running", "background", "scheduled", "cron", "without supervision", "automated"],
+  multi_turn:       ["conversation", "multi-turn", "chat", "dialogue", "memory", "history", "context window", "follow-up"],
+  financial:        ["financ", "banking", "payment", "invest", "trading", "portfolio", "loan", "credit", "insurance", "money", "fund"],
+  medical:          ["medical", "health", "clinical", "patient", "doctor", "diagnosis", "treatment", "symptom", "pharmacy", "ehr"],
+  content:          ["content", "writing", "creative", "blog", "article", "copy", "draft", "generate text", "marketing"],
+  data_analysis:    ["data analysis", "analytics", "sql", "database", "query", "report", "dashboard", "chart", "insight", "csv"],
+  pii:              ["personal", "pii", "privacy", "user data", "sensitive", "gdpr", "hipaa", "email", "phone number"],
+};
+
+function detectTags(text, activeTags) {
+  const lower = text.toLowerCase();
+  const detected = new Set(activeTags); // Start with manually selected tags
+
+  for (const [tag, keywords] of Object.entries(KEYWORD_MAP)) {
+    if (keywords.some(kw => lower.includes(kw))) {
+      detected.add(tag);
+    }
+  }
+  return [...detected];
+}
+
+/* ─────────────────────────────────────────────
+   SCORING
+   Score each recommendation based on tag overlap
+───────────────────────────────────────────── */
+function scoreRec(rec, detectedTags) {
+  if (rec.tags.includes("always")) return 3;
+  const overlap = rec.tags.filter(t => detectedTags.includes(t)).length;
+  return overlap;
+}
+
+function filterAndSort(items, detectedTags) {
+  return items
+    .map(item => ({ ...item, score: scoreRec(item, detectedTags) }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => {
+      const pOrder = { critical: 4, high: 3, always: 3, medium: 2, low: 1 };
+      if (b.score !== a.score) return b.score - a.score;
+      return (pOrder[b.priority] || 0) - (pOrder[a.priority] || 0);
+    });
+}
+
+/* ─────────────────────────────────────────────
+   FAILURE MODE DESCRIPTIONS for profile card
+───────────────────────────────────────────── */
+const FAILURE_MODES_BY_TAG = {
+  rag:              { label: "RAG / Retrieval", risks: [{ text: "Hallucination from unsupported context claims", sev: "critical" }, { text: "Stale or irrelevant retrieved chunks", sev: "high" }, { text: "Citation fabrication", sev: "high" }] },
+  coding:           { label: "Coding Assistant", risks: [{ text: "Security vulnerabilities in generated code", sev: "critical" }, { text: "Syntax or logic errors", sev: "high" }, { text: "Credential leakage in code examples", sev: "high" }] },
+  customer_service: { label: "Customer Service", risks: [{ text: "Overconfident answers on unknown topics", sev: "high" }, { text: "Failure to escalate complex issues", sev: "high" }, { text: "Inconsistent brand tone", sev: "medium" }] },
+  agentic:          { label: "Tool-using / Agentic", risks: [{ text: "Unintended side-effects from tool calls", sev: "critical" }, { text: "Infinite reasoning loops driving up cost", sev: "high" }, { text: "Wrong tool selected for the task", sev: "high" }] },
+  autonomous:       { label: "Autonomous Agent", risks: [{ text: "Runaway loops with no exit condition", sev: "critical" }, { text: "Unmonitored actions on live systems", sev: "critical" }] },
+  financial:        { label: "Financial Domain", risks: [{ text: "Hallucinated rates, figures, or regulations", sev: "critical" }, { text: "PII/account data exposure", sev: "critical" }, { text: "Non-compliant advice", sev: "critical" }] },
+  medical:          { label: "Medical / Health", risks: [{ text: "Hallucinated clinical information", sev: "critical" }, { text: "Unauthorized diagnostic statements", sev: "critical" }, { text: "PHI/patient data exposure (HIPAA)", sev: "critical" }] },
+  multi_turn:       { label: "Multi-turn Conversation", risks: [{ text: "Context loss leading to contradictions", sev: "high" }, { text: "PII accumulated over conversation history", sev: "high" }] },
+  content:          { label: "Content Generation", risks: [{ text: "Harmful or policy-violating generated content", sev: "critical" }, { text: "Brand voice inconsistency at scale", sev: "medium" }] },
+  data_analysis:    { label: "Data Analysis", risks: [{ text: "Incorrect calculations or statistical errors", sev: "high" }, { text: "SQL injection via natural language queries", sev: "critical" }] },
+};
+
+/* ─────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────── */
+function renderCard(item, idx) {
+  const priClass = { critical: "pill-critical", high: "pill-high", medium: "pill-medium", low: "pill-low", always: "pill-always" }[item.priority] || "pill-always";
+  const priLabel = item.priority === "always" ? "always-on" : item.priority;
+
+  let detailsHTML = `<div class="why-label">Why This Matters</div>
+    <div class="why-text">${item.why}</div>`;
+
+  if (item.impl) {
+    detailsHTML += `<div class="impl-label">How to Implement</div>
+    <div class="impl-block">${item.impl}</div>`;
+  }
+  if (item.threshold) {
+    detailsHTML += `<div class="threshold-badge">📏 ${item.threshold}</div>`;
+  }
+  if (item.code) {
+    detailsHTML += `<div class="code-block-wrap">
+      <div class="code-lang-label">Python — Implementation Snippet</div>
+      <pre class="code-block">${escapeHtml(item.code)}</pre>
+    </div>`;
+  }
+
+  return `
+  <div class="rec-card" id="card-${item.id}">
+    <div class="card-header" onclick="toggleCard('${item.id}')">
+      <span class="priority-pill ${priClass}">${priLabel}</span>
+      <div class="card-body">
+        <div class="card-name">${item.name}</div>
+        <div class="card-desc">${item.desc}</div>
+      </div>
+      <span class="card-toggle" id="toggle-${item.id}">▼</span>
+    </div>
+    <div class="card-details" id="details-${item.id}">
+      ${detailsHTML}
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const details = document.getElementById(`details-${id}`);
+  const toggle  = document.getElementById(`toggle-${id}`);
+  details.classList.toggle("open");
+  toggle.classList.toggle("open");
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderSection(icon, title, items, desc) {
+  if (!items.length) return "";
+  return `
+  <div class="rec-section">
+    <div class="rec-section-header">
+      <span class="rec-section-icon">${icon}</span>
+      <span class="rec-section-title">${title}</span>
+      <span class="rec-count">${items.length}</span>
+      <span class="rec-section-desc">${desc}</span>
+    </div>
+    <div class="cards">
+      ${items.map((item, i) => renderCard(item, i)).join("")}
+    </div>
+  </div>`;
+}
+
+function renderProfile(detectedTags) {
+  const tagLabels = detectedTags
+    .map(t => FAILURE_MODES_BY_TAG[t]?.label || t)
+    .filter(Boolean);
+
+  // Collect top risks
+  const allRisks = [];
+  const seen = new Set();
+  for (const tag of detectedTags) {
+    const mode = FAILURE_MODES_BY_TAG[tag];
+    if (!mode) continue;
+    for (const risk of mode.risks) {
+      if (!seen.has(risk.text)) {
+        seen.add(risk.text);
+        allRisks.push(risk);
+      }
+    }
+  }
+  allRisks.sort((a, b) => {
+    const o = { critical: 3, high: 2, medium: 1 };
+    return (o[b.sev] || 0) - (o[a.sev] || 0);
+  });
+  const topRisks = allRisks.slice(0, 6);
+
+  const tagsHTML = tagLabels.length
+    ? tagLabels.map(l => `<span class="profile-tag">${l}</span>`).join("")
+    : `<span class="profile-tag">General Agent</span>`;
+
+  const risksHTML = topRisks.length
+    ? topRisks.map(r => `
+        <div class="risk-item">
+          <div class="risk-dot ${r.sev}"></div>
+          <span>${r.text}</span>
+        </div>`).join("")
+    : "<div class='risk-item'><div class='risk-dot medium'></div><span>General LLM failure modes apply</span></div>";
+
+  return `
+  <div class="profile-card">
+    <div class="profile-title">🔍 Detected Agent Profile</div>
+    <div class="profile-tags">${tagsHTML}</div>
+    <div class="why-label" style="margin-bottom:6px">Key Failure Modes to Watch</div>
+    <div class="risk-summary">${risksHTML}</div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────
+   CLAUDE API — streaming analysis
+───────────────────────────────────────────── */
+async function callClaude(desc, tags) {
+  const body = document.getElementById("aiBody");
+  if (!body) return;
+
+  if (!CLAUDE_API_KEY) {
+    body.innerHTML = `<span style="color:#475569;font-size:12.5px">Add a Claude API key on the left to enable AI analysis. The structured recommendations below are keyword-matched.</span>`;
+    return;
+  }
+
+  const systemPrompt = `You are an expert AI agent observability architect. Analyze AI agent descriptions and give sharp, specific, actionable risk assessments. Be direct, concrete, and specific to the agent described — never generic.`;
+
+  const userMsg = `Agent: "${desc}"
+Categories detected: ${tags.length ? tags.join(", ") : "general"}
+
+Analyze this agent's observability needs in exactly this structure:
+
+**Risk Profile**
+The 2-3 highest-priority failure modes specific to this agent and why they matter.
+
+**First Guardrail to Ship**
+The single most important guardrail for this specific agent and why it's the priority.
+
+**Critical Eval**
+The one eval metric that most directly measures whether this agent is working correctly.
+
+**Key Production Metric**
+The single metric that would be the clearest early warning signal of degradation.
+
+Be specific to this agent. 200 words max.`;
+
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": CLAUDE_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 600,
+        stream: true,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userMsg }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      body.innerHTML = `<span class="ai-error">API error: ${err.error?.message || resp.statusText}</span>`;
+      return;
+    }
+
+    body.innerHTML = "";
+    const cursor = document.createElement("span");
+    cursor.className = "ai-cursor";
+    body.appendChild(cursor);
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let text = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const lines = decoder.decode(value, { stream: true }).split("\n");
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const data = line.slice(6);
+        if (data === "[DONE]") continue;
+        try {
+          const json = JSON.parse(data);
+          if (json.type === "content_block_delta" && json.delta?.type === "text_delta") {
+            text += json.delta.text;
+            body.textContent = text;
+            body.appendChild(cursor);
+          }
+        } catch {}
+      }
+    }
+
+    cursor.remove();
+    // Render bold markdown
+    body.innerHTML = text
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+
+  } catch (e) {
+    body.innerHTML = `<span class="ai-error">Could not reach Claude API. Check network / CORS settings.</span>`;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   MAIN ANALYZE FUNCTION
+───────────────────────────────────────────── */
+function analyze() {
+  const desc = document.getElementById("agentDesc").value.trim();
+  const activeTags = [...document.querySelectorAll(".qtag.active")].map(el => el.dataset.tag);
+
+  if (!desc && activeTags.length === 0) {
+    document.getElementById("agentDesc").focus();
+    document.getElementById("agentDesc").style.borderColor = "#ef4444";
+    setTimeout(() => document.getElementById("agentDesc").style.borderColor = "", 1200);
+    return;
+  }
+
+  const detectedTags = detectTags(desc, activeTags);
+  const filteredGuardrails = filterAndSort(GUARDRAILS, detectedTags);
+  const filteredEvals      = filterAndSort(EVALS,      detectedTags);
+  const filteredMetrics    = filterAndSort(METRICS,    detectedTags);
+
+  const html = `
+    <div class="ai-section">
+      <div class="ai-section-header">
+        <span class="ai-label">🤖 Claude Analysis</span>
+        <span class="ai-model-badge">claude-sonnet-4-6</span>
+      </div>
+      <div class="ai-body" id="aiBody">
+        <div class="ai-loading"><div class="ai-spinner"></div>Analyzing your agent...</div>
+      </div>
+    </div>
+    ${renderProfile(detectedTags)}
+    ${renderSection("🛡️", "Guardrails", filteredGuardrails, "Prevent bad inputs &amp; outputs")}
+    ${renderSection("🧪", "Code-based Evals", filteredEvals, "Measure quality continuously")}
+    ${renderSection("📊", "Dashboard Metrics", filteredMetrics, "Track in production")}
+  `;
+
+  document.getElementById("emptyState").style.display = "none";
+  const results = document.getElementById("results");
+  results.style.display = "flex";
+  results.innerHTML = html;
+  results.scrollTop = 0;
+
+  callClaude(desc, detectedTags);
+}
+
+/* ─────────────────────────────────────────────
+   QUICK TAGS & EXAMPLES
+───────────────────────────────────────────── */
+// Pre-fill API key from localStorage
+const savedKey = localStorage.getItem("agentscope_key");
+if (savedKey) document.getElementById("apiKey").value = savedKey;
+
+document.querySelectorAll(".qtag").forEach(el => {
+  el.addEventListener("click", () => el.classList.toggle("active"));
+});
+
+const EXAMPLES = {
+  rag_cs: {
+    text: "A customer support bot for our SaaS product. It retrieves answers from our documentation and knowledge base using RAG, handles billing questions, and escalates complex issues to our human support team.",
+    tags: ["rag", "customer_service", "multi_turn"]
+  },
+  coding: {
+    text: "A coding assistant that helps developers write, review, and debug Python code. It has access to our internal codebase via search tools and can run code in a sandbox environment.",
+    tags: ["coding", "agentic"]
+  },
+  agentic: {
+    text: "An autonomous agent that processes customer orders end-to-end: it looks up inventory, checks payment status, coordinates with warehouse APIs, sends email confirmations, and updates our CRM — all without human intervention.",
+    tags: ["agentic", "autonomous", "multi_turn"]
+  },
+  financial: {
+    text: "A financial advisor chatbot that answers questions about investment products, portfolio performance, and market trends. It retrieves data from our financial data APIs and knowledge base.",
+    tags: ["financial", "rag", "multi_turn"]
+  },
+  medical: {
+    text: "A clinical decision support assistant that retrieves relevant medical literature and guidelines to help clinicians with differential diagnoses. It accesses patient history from our EHR system.",
+    tags: ["medical", "rag", "agentic"]
+  },
+};
+
+document.querySelectorAll(".example-pill").forEach(el => {
+  el.addEventListener("click", () => {
+    const ex = EXAMPLES[el.dataset.ex];
+    if (!ex) return;
+    document.getElementById("agentDesc").value = ex.text;
+    // Reset and activate correct tags
+    document.querySelectorAll(".qtag").forEach(q => q.classList.remove("active"));
+    ex.tags.forEach(tag => {
+      const qEl = document.querySelector(`.qtag[data-tag="${tag}"]`);
+      if (qEl) qEl.classList.add("active");
+    });
+    analyze();
+  });
+});
+
+// Allow Enter in textarea to not submit, Ctrl+Enter to analyze
+document.getElementById("agentDesc").addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    analyze();
+  }
+});
+</script>
+</body>
+</html>
