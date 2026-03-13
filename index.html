@@ -1508,7 +1508,7 @@ function analyze() {
   const filteredEvals      = filterAndSort(EVALS,      detectedTags);
   const filteredMetrics    = filterAndSort(METRICS,    detectedTags);
 
-  const html = `
+  const aiSection = CLAUDE_API_KEY ? `
     <div class="ai-section">
       <div class="ai-section-header">
         <span class="ai-label">🤖 Claude Analysis</span>
@@ -1517,7 +1517,10 @@ function analyze() {
       <div class="ai-body" id="aiBody">
         <div class="ai-loading"><div class="ai-spinner"></div>Analyzing your agent...</div>
       </div>
-    </div>
+    </div>` : ``;
+
+  const html = `
+    ${aiSection}
     ${renderProfile(detectedTags)}
     ${renderSection("🛡️", "Guardrails", filteredGuardrails, "Prevent bad inputs &amp; outputs")}
     ${renderSection("🧪", "Code-based Evals", filteredEvals, "Measure quality continuously")}
