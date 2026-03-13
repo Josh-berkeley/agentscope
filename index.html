@@ -1401,7 +1401,7 @@ async function callClaude(desc, tags) {
   if (!body) return;
 
   if (!CLAUDE_API_KEY) {
-    body.innerHTML = `<span style="color:#475569;font-size:12.5px">Add a Claude API key on the left to enable AI analysis. The structured recommendations below are keyword-matched.</span>`;
+    body.innerHTML = ``;
     return;
   }
 
